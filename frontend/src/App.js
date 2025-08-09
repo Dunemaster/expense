@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './components/Menu.css';
 
 // Get API base URL from environment variable with fallback
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
@@ -24,6 +25,7 @@ function App() {
     endDate: new Date().toISOString().slice(0, 10)     // Today's date in YYYY-MM-DD format
   });
   const [quickFilter, setQuickFilter] = useState('today');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Load expenses when component mounts or date filter changes
   useEffect(() => {
@@ -285,6 +287,34 @@ function App() {
 
   return (
     <div className="App">
+      {/* Hamburger Menu Button */}
+      <button 
+        className="hamburger-button"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        <div className="hamburger-line"></div>
+        <div className="hamburger-line"></div>
+        <div className="hamburger-line"></div>
+      </button>
+
+      {/* Side Menu */}
+      <nav className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
+        <div className="menu-item active" title="Main">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+      </nav>
+
+      {/* Menu Overlay */}
+      {isMenuOpen && (
+        <div 
+          className="menu-overlay"
+          onClick={() => setIsMenuOpen(false)}
+        ></div>
+      )}
+
       <header className="App-header">
         <h1>Expense Management System</h1>
         
