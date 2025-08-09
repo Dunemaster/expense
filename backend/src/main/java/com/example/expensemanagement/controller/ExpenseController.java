@@ -111,10 +111,16 @@ public class ExpenseController {
     @GetMapping("/date-range")
     public ResponseEntity<List<Expense>> getExpensesByDateRange(
             @RequestParam String startDate, 
-            @RequestParam String endDate) {
+            @RequestParam String endDate,
+            @RequestParam(required = false, defaultValue = "UTC") String timezone) {
         try {
-            Instant start = Instant.parse(startDate);
-            Instant end = Instant.parse(endDate);
+            // Convert date strings (YYYY-MM-DD) to Instant range using client timezone
+            // Parse the timezone offset (e.g., "+02:00", "-05:00")
+            String startDateTime = startDate + "T00:00:00.000" + (timezone.equals("UTC") ? "Z" : timezone);
+            String endDateTime = endDate + "T23:59:59.999" + (timezone.equals("UTC") ? "Z" : timezone);
+            
+            Instant start = Instant.parse(startDateTime);
+            Instant end = Instant.parse(endDateTime);
             List<Expense> expenses = expenseService.findByDateRange(start, end);
             return new ResponseEntity<>(expenses, HttpStatus.OK);
         } catch (Exception e) {

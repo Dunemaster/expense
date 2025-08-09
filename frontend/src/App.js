@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Get API base URL from environment variable with fallback
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+
 function App() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,14 +23,22 @@ function App() {
     endDate: new Date().toISOString().slice(0, 10)     // Today's date in YYYY-MM-DD format
   });
 
-  // Load expenses when component mounts
+  // Load expenses when component mounts or date filter changes
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [dateFilter]);
 
   const loadExpenses = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/expenses');
+      // Get client timezone offset in format like "+02:00" or "-05:00"
+      const timezoneOffset = new Date().getTimezoneOffset();
+      const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
+      const offsetMinutes = Math.abs(timezoneOffset) % 60;
+      const sign = timezoneOffset <= 0 ? '+' : '-';
+      const timezone = `${sign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
+      
+      const url = `${API_BASE_URL}/expenses/date-range?startDate=${dateFilter.startDate}&endDate=${dateFilter.endDate}&timezone=${encodeURIComponent(timezone)}`;
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setExpenses(data);
@@ -46,7 +57,7 @@ function App() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/expenses', {
+      const response = await fetch(`${API_BASE_URL}/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +72,8 @@ function App() {
 
       if (response.ok) {
         const createdExpense = await response.json();
-        setExpenses([createdExpense, ...expenses]);
+        // Reload expenses to get filtered data from server
+        await loadExpenses();
         setNewExpense({ 
           description: '', 
           sum: '', 
@@ -122,7 +134,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/expenses/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
         method: 'DELETE',
       });
 
@@ -144,8 +156,7 @@ function App() {
 
   const getTotalExpenses = () => {
     const totals = {};
-    const filteredExpenses = getFilteredExpenses();
-    filteredExpenses.forEach(expense => {
+    expenses.forEach(expense => {
       if (!totals[expense.currency]) {
         totals[expense.currency] = 0;
       }
@@ -162,16 +173,8 @@ function App() {
     setSortConfig({ key, direction });
   };
 
-  const getFilteredExpenses = () => {
-    return expenses.filter(expense => {
-      const expenseDate = new Date(expense.moment).toISOString().slice(0, 10);
-      return expenseDate >= dateFilter.startDate && expenseDate <= dateFilter.endDate;
-    });
-  };
-
   const getSortedExpenses = () => {
-    const filteredExpenses = getFilteredExpenses();
-    const sortedExpenses = [...filteredExpenses];
+    const sortedExpenses = [...expenses];
     if (sortConfig.key) {
       sortedExpenses.sort((a, b) => {
         let aValue = a[sortConfig.key];
@@ -266,7 +269,7 @@ function App() {
             </div>
 
             <div className="expense-list">
-              <h3>Recent Expenses ({getSortedExpenses().length} of {expenses.length})</h3>
+              <h3>Recent Expenses ({getSortedExpenses().length})</h3>
               <div className="date-filter-container">
                 <div className="date-filter">
                   <label htmlFor="startDate">From:</label>
