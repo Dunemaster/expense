@@ -22,6 +22,7 @@ function App() {
     startDate: new Date().toISOString().slice(0, 10), // Today's date in YYYY-MM-DD format
     endDate: new Date().toISOString().slice(0, 10)     // Today's date in YYYY-MM-DD format
   });
+  const [quickFilter, setQuickFilter] = useState('today');
 
   // Load expenses when component mounts or date filter changes
   useEffect(() => {
@@ -211,6 +212,67 @@ function App() {
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
+  const getDateRangeForQuickFilter = (filterType) => {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    
+    switch (filterType) {
+      case 'today':
+        return { startDate: todayStr, endDate: todayStr };
+      
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+        return { startDate: yesterdayStr, endDate: yesterdayStr };
+      
+      case 'thisWeek':
+        const startOfWeek = new Date(today);
+        const dayOfWeek = today.getDay();
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0
+        startOfWeek.setDate(today.getDate() - daysToMonday);
+        return { 
+          startDate: startOfWeek.toISOString().slice(0, 10), 
+          endDate: todayStr 
+        };
+      
+      case 'lastWeek':
+        const lastWeekEnd = new Date(today);
+        const daysToLastSunday = today.getDay() === 0 ? 7 : today.getDay();
+        lastWeekEnd.setDate(today.getDate() - daysToLastSunday);
+        const lastWeekStart = new Date(lastWeekEnd);
+        lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
+        return { 
+          startDate: lastWeekStart.toISOString().slice(0, 10), 
+          endDate: lastWeekEnd.toISOString().slice(0, 10) 
+        };
+      
+      case 'thisMonth':
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { 
+          startDate: startOfMonth.toISOString().slice(0, 10), 
+          endDate: todayStr 
+        };
+      
+      case 'last30Days':
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        return { 
+          startDate: thirtyDaysAgo.toISOString().slice(0, 10), 
+          endDate: todayStr 
+        };
+      
+      default:
+        return { startDate: todayStr, endDate: todayStr };
+    }
+  };
+
+  const handleQuickFilterChange = (filterType) => {
+    setQuickFilter(filterType);
+    const dateRange = getDateRangeForQuickFilter(filterType);
+    setDateFilter(dateRange);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -272,12 +334,28 @@ function App() {
               <h3>Recent Expenses ({getSortedExpenses().length})</h3>
               <div className="date-filter-container">
                 <div className="date-filter">
+                  <select
+                    id="quickFilter"
+                    value={quickFilter}
+                    onChange={(e) => handleQuickFilterChange(e.target.value)}
+                    className="quick-filter-select"
+                  >
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="thisWeek">This Week</option>
+                    <option value="lastWeek">Last Week</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="last30Days">Last 30 Days</option>
+                  </select>
                   <label htmlFor="startDate">From:</label>
                   <input
                     id="startDate"
                     type="date"
                     value={dateFilter.startDate}
-                    onChange={(e) => setDateFilter({...dateFilter, startDate: e.target.value})}
+                    onChange={(e) => {
+                      setDateFilter({...dateFilter, startDate: e.target.value});
+                      setQuickFilter('custom');
+                    }}
                     className="date-input"
                   />
                   <label htmlFor="endDate">To:</label>
@@ -285,7 +363,10 @@ function App() {
                     id="endDate"
                     type="date"
                     value={dateFilter.endDate}
-                    onChange={(e) => setDateFilter({...dateFilter, endDate: e.target.value})}
+                    onChange={(e) => {
+                      setDateFilter({...dateFilter, endDate: e.target.value});
+                      setQuickFilter('custom');
+                    }}
                     className="date-input"
                   />
                 </div>

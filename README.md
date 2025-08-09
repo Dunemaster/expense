@@ -92,6 +92,7 @@ spring-react-app/
    -- calculate on backend
    -- show on frontend
 
+ - configure persistent storage (postgres)
  - add normal logging (instead of println)
 
  - data export

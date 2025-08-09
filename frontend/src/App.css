@@ -292,6 +292,25 @@ h3 {
   backdrop-filter: blur(10px);
 }
 
+.quick-filter-select {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 0.9rem;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.quick-filter-select:focus {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  background: white;
+}
+
 .date-filter label {
   color: white;
   font-weight: 500;
