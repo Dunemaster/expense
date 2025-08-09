@@ -113,7 +113,7 @@ h3 {
 
 .expense-input, .expense-select {
   padding: 10px 15px;
-  font-size: 14px;
+  font-size: 18px;
   border: none;
   border-radius: 20px;
   outline: none;
@@ -203,6 +203,7 @@ h3 {
   font-weight: bold;
   color: white;
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  font-size: 1rem;
 }
 
 .sortable-header {
@@ -219,6 +220,7 @@ h3 {
   padding: 12px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
+  font-size: 1.1rem;
 }
 
 .expenses-table tbody tr {
@@ -293,12 +295,12 @@ h3 {
 }
 
 .quick-filter-select {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
   color: #333;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   outline: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
@@ -314,16 +316,16 @@ h3 {
 .date-filter label {
   color: white;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .date-input {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
   color: #333;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   outline: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
