@@ -18,7 +18,7 @@ public class Expense {
     private String description;
     
     @Column(nullable = false, precision = 19, scale = 2)
-    @Positive(message = "Sum must positive")
+    @Positive(message = "Sum should be positive")
     private BigDecimal sum;
     
     @Column(nullable = false)
@@ -55,9 +55,6 @@ public class Expense {
     }
     
     public void setSum(BigDecimal sum) {
-        if (sum.compareTo(BigDecimal.ZERO) <= 0 ) {
-           throw new IllegalArgumentException("Sum should be positive.");
-        }
         this.sum = sum;
     }
     

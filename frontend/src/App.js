@@ -55,7 +55,43 @@ function App() {
         setNewExpense({ description: '', sum: '', currency: 'EUR' });
         setMessage('Expense added successfully!');
       } else {
-        setMessage('Error: Failed to add expense');
+        // Try to extract error message from server response
+        try {
+          const errorData = await response.text();
+          // Check if it's a JSON error response
+          try {
+            const errorJson = JSON.parse(errorData);
+            setMessage(`Error: ${errorJson.message || errorJson.error || 'Failed to add expense'}`);
+          } catch {
+            // If not JSON, try to extract meaningful error from various formats
+            let errorMessage = 'Failed to add expense';
+            
+            // Try to extract content after common error prefixes
+            const errorPatterns = [
+              /JSON parse error:\s*(.+?)[\.\]]/i,
+              /error:\s*(.+?)[\.\]]/i,
+              /exception:\s*(.+?)[\.\]]/i,
+              /message:\s*(.+?)[\.\]]/i
+            ];
+            
+            for (const pattern of errorPatterns) {
+              const match = errorData.match(pattern);
+              if (match && match[1] && match[1].trim()) {
+                errorMessage = match[1].trim();
+                break;
+              }
+            }
+            
+            // If no pattern matched, use the raw error data if it's reasonably short
+            if (errorMessage === 'Failed to add expense' && errorData && errorData.length < 200) {
+              errorMessage = errorData.trim();
+            }
+            
+            setMessage(`Error: ${errorMessage}`);
+          }
+        } catch {
+          setMessage('Error: Failed to add expense');
+        }
       }
     } catch (error) {
       console.error('Error:', error);

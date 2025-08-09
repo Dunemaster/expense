@@ -1,5 +1,6 @@
 package com.example.expensemanagement.controller;
 
+import com.example.expensemanagement.dto.ErrorResponse;
 import com.example.expensemanagement.entity.Expense;
 import com.example.expensemanagement.service.ExpenseService;
 
@@ -7,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -28,14 +32,19 @@ public class ExpenseController {
      * Create a new expense
      */
     @PostMapping
-    public ResponseEntity<Expense> createExpense(@RequestBody Expense expense) {
+    public ResponseEntity<?> createExpense(@Valid @RequestBody Expense expense, HttpServletRequest request) {
         try {
             Expense savedExpense = expenseService.saveExpense(expense);
             System.out.println("Created new expense: " + savedExpense);
             return new ResponseEntity<>(savedExpense, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error creating expense: " + e.getMessage());
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value(), request.getRequestURI());
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             System.err.println("Error creating expense: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            ErrorResponse errorResponse = new ErrorResponse("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR.value(), request.getRequestURI());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
