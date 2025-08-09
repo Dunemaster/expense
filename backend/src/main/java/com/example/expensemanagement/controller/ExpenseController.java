@@ -163,19 +163,6 @@ public class ExpenseController {
             System.err.println("Error deleting expense: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-    
-    /**
-     * Get expense count
-     */
-    @GetMapping("/count")
-    public ResponseEntity<Long> getExpenseCount() {
-        try {
-            long count = expenseService.countExpenses();
-            return new ResponseEntity<>(count, HttpStatus.OK);
-        } catch (Exception e) {
-            System.err.println("Error counting expenses: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    }    
+
 }

@@ -92,6 +92,7 @@ spring-react-app/
    -- calculate on backend
    -- show on frontend
 
+ - add normal logging (instead of println)
 
  - data export
  - data import
@@ -104,6 +105,8 @@ START USING LOCALLY
  
 START USING IN THE CLOUD
 
+check logging in the cloud
+monitoring (just to test) requests number
 reports: by category in a period
    for selected categories
 mobile app?
