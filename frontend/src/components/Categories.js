@@ -28,14 +28,8 @@ function Categories() {
 
   const loadCategories = async () => {
     try {
-      // Try hierarchy endpoint first
-      let response = await fetch(`${API_BASE_URL}/categories/type/${selectedType}/hierarchy`);
-      
-      if (!response.ok) {
-        // If hierarchy endpoint fails, try the simpler type endpoint
-        console.warn('Hierarchy endpoint failed, trying type endpoint');
-        response = await fetch(`${API_BASE_URL}/categories/type/${selectedType}`);
-      }
+      // Use the new tree endpoint that includes parent information
+      const response = await fetch(`${API_BASE_URL}/categories/type/${selectedType}/tree`);
       
       if (response.ok) {
         const data = await response.json();

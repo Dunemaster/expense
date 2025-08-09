@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.validation.annotation.Validated;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -129,6 +127,70 @@ public class CategoryController {
             System.err.println("Error retrieving hierarchical categories by type " + type + ": " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Get categories with full tree structure for management interface
+     */
+    @GetMapping("/type/{type}/tree")
+    public ResponseEntity<?> getCategoriesTreeByType(@PathVariable String type) {
+        try {
+            TransactionType transactionType = TransactionType.valueOf(type.toUpperCase());
+            List<Category> categories = categoryService.findByType(transactionType);
+            
+            // Create a custom response that includes parent information
+            List<CategoryTreeNode> treeNodes = categories.stream()
+                .map(cat -> new CategoryTreeNode(
+                    cat.getId(),
+                    cat.getName(),
+                    cat.getType(),
+                    cat.getParent() != null ? new ParentInfo(cat.getParent().getId(), cat.getParent().getName()) : null
+                ))
+                .toList();
+            
+            return new ResponseEntity<>(treeNodes, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid transaction type: " + type);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            System.err.println("Error retrieving tree categories by type " + type + ": " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Inner classes for tree structure response
+    public static class CategoryTreeNode {
+        private Long id;
+        private String name;
+        private TransactionType type;
+        private ParentInfo parent;
+
+        public CategoryTreeNode(Long id, String name, TransactionType type, ParentInfo parent) {
+            this.id = id;
+            this.name = name;
+            this.type = type;
+            this.parent = parent;
+        }
+
+        // Getters
+        public Long getId() { return id; }
+        public String getName() { return name; }
+        public TransactionType getType() { return type; }
+        public ParentInfo getParent() { return parent; }
+    }
+
+    public static class ParentInfo {
+        private Long id;
+        private String name;
+
+        public ParentInfo(Long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        // Getters
+        public Long getId() { return id; }
+        public String getName() { return name; }
     }
     
     /**

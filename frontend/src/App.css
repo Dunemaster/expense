@@ -122,6 +122,16 @@ h3 {
   min-width: 150px;
 }
 
+.category-tree-select {
+  font-family: 'Courier New', monospace;
+  min-width: 200px;
+}
+
+.category-tree-select option {
+  font-family: 'Courier New', monospace;
+  padding: 5px;
+}
+
 .expense-input:focus, .expense-select:focus {
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }

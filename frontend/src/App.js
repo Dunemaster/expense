@@ -43,7 +43,7 @@ function App() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories/type/${newExpense.type}`);
+      const response = await fetch(`${API_BASE_URL}/categories/type/${newExpense.type}/tree`);
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -308,6 +308,45 @@ function App() {
     setDateFilter(dateRange);
   };
 
+  // Helper functions for category tree structure in dropdown
+  const getRootCategories = () => {
+    return categories.filter(cat => !cat.parent);
+  };
+
+  const getChildCategories = (parentId) => {
+    return categories.filter(cat => cat.parent && cat.parent.id === parentId);
+  };
+
+  const buildCategoryTree = () => {
+    const treeOptions = [];
+    
+    const addCategoryToTree = (category, level = 0) => {
+      const indent = '  '.repeat(level); // 2 spaces per level
+      const displayName = level > 0 ? `${indent}└─ ${category.name}` : category.name;
+      
+      treeOptions.push({
+        id: category.id,
+        name: category.name,
+        displayName: displayName,
+        level: level
+      });
+      
+      // Add children recursively
+      const children = getChildCategories(category.id);
+      children.forEach(child => {
+        addCategoryToTree(child, level + 1);
+      });
+    };
+    
+    // Start with root categories
+    const rootCategories = getRootCategories();
+    rootCategories.forEach(rootCategory => {
+      addCategoryToTree(rootCategory);
+    });
+    
+    return treeOptions;
+  };
+
   return (
     <div className="App">
       {/* Hamburger Menu Button */}
@@ -393,14 +432,14 @@ function App() {
                   <select
                     value={newExpense.categoryId}
                     onChange={(e) => setNewExpense({...newExpense, categoryId: e.target.value})}
-                    className="expense-select"
+                    className="expense-select category-tree-select"
                     disabled={isLoading}
                     required
                   >
                     <option value="">Select Category</option>
-                    {categories.map(category => (
+                    {buildCategoryTree().map(category => (
                       <option key={category.id} value={category.id}>
-                        {category.parent ? `${category.parent.name} > ${category.name}` : category.name}
+                        {category.displayName}
                       </option>
                     ))}
                   </select>
