@@ -78,34 +78,32 @@ spring-react-app/
 
    The frontend will start on `http://localhost:3000`
 
-## Usage
 
-1. Open your browser and go to `http://localhost:3000`
-2. Enter your name in the input field
-3. Click "Submit Name"
-4. The name will be sent to the backend server
-5. Check the backend console to see the logged message
-6. A success message will be displayed on the frontend
-
-## API Endpoints
-
-- `POST /api/name` - Accepts a JSON payload with a name field and returns a greeting message
-
-## Technologies Used
-
-- **Backend**: Spring Boot 3.2.0, Java 17, Maven
-- **Frontend**: React 18, JavaScript, CSS
-- **Communication**: REST API with JSON
 
 
 ## Next steps
 
- - reformat main page - show only todays expenses, add date range filter
- - add ability to select expense, edit it, save and delete
+ - add ability to select expense, edit it and save
+ - add income
+ - add expense categories tree
  - add storage place
  -- backend
  - show current balance
- -- calculate on backend
- -- show on frontend
+   -- calculate on backend
+   -- show on frontend
 
- - decide how to deploy into cloud (function? which database to use?)
+
+ - data export
+ - data import
+ - data import from drebedengi
+
+START USING LOCALLY
+
+ -- authentication
+ -- decide how to deploy into cloud (function? which database to use?)
+ 
+START USING IN THE CLOUD
+
+reports: by category in a period
+   for selected categories
+mobile app?
