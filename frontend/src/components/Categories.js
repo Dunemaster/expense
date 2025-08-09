@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './Categories.css';
 
 // Get API base URL from environment variable with fallback
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
 function Categories() {
+  const { type } = useParams();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const [selectedType, setSelectedType] = useState('EXPENSE');
+  const [selectedType, setSelectedType] = useState(
+    type === 'incomes' ? 'INCOME' : 'EXPENSE'
+  );
   const [newCategory, setNewCategory] = useState({
     name: '',
     type: 'EXPENSE',
@@ -15,6 +20,12 @@ function Categories() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update selectedType when URL parameter changes
+  useEffect(() => {
+    const newType = type === 'incomes' ? 'INCOME' : 'EXPENSE';
+    setSelectedType(newType);
+  }, [type]);
 
   // Load categories when component mounts or type changes
   useEffect(() => {
@@ -221,13 +232,13 @@ function Categories() {
         <div className="type-selector">
           <button 
             className={selectedType === 'EXPENSE' ? 'active' : ''}
-            onClick={() => setSelectedType('EXPENSE')}
+            onClick={() => navigate('/categories/expenses')}
           >
             Expense Categories
           </button>
           <button 
             className={selectedType === 'INCOME' ? 'active' : ''}
-            onClick={() => setSelectedType('INCOME')}
+            onClick={() => navigate('/categories/incomes')}
           >
             Income Categories
           </button>
