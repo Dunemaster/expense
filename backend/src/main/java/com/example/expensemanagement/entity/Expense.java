@@ -27,6 +27,10 @@ public class Expense {
     @Column(nullable = false)
     private Instant moment;
     
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType type;
+    
     // Default constructor
     public Expense() {
     }
@@ -72,6 +76,14 @@ public class Expense {
     
     public void setMoment(Instant moment) {
         this.moment = moment;
+    }
+    
+    public TransactionType getType() {
+        return type;
+    }
+    
+    public void setType(TransactionType type) {
+        this.type = type;
     }
     
     @Override

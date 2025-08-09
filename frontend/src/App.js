@@ -12,7 +12,8 @@ function App() {
     description: '',
     sum: '',
     currency: 'EUR',
-    moment: new Date().toISOString().slice(0, 16) // Default to current date-time in local timezone
+    moment: new Date().toISOString().slice(0, 16), // Default to current date-time in local timezone
+    type: 'EXPENSE' // Default to expense
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'moment',
@@ -67,7 +68,8 @@ function App() {
           description: newExpense.description.trim(),
           sum: parseFloat(newExpense.sum),
           currency: newExpense.currency,
-          moment: new Date(newExpense.moment).toISOString()
+          moment: new Date(newExpense.moment).toISOString(),
+          type: newExpense.type
         }),
       });
 
@@ -79,7 +81,8 @@ function App() {
           description: '', 
           sum: '', 
           currency: 'EUR',
-          moment: new Date().toISOString().slice(0, 16)
+          moment: new Date().toISOString().slice(0, 16),
+          type: 'EXPENSE'
         });
         setMessage('Expense added successfully!');
       } else {
@@ -156,13 +159,20 @@ function App() {
   };
 
   const getTotalExpenses = () => {
-    const totals = {};
+    const totals = {
+      expenses: {},
+      incomes: {}
+    };
+    
     expenses.forEach(expense => {
-      if (!totals[expense.currency]) {
-        totals[expense.currency] = 0;
+      const category = expense.type === 'INCOME' ? 'incomes' : 'expenses';
+      
+      if (!totals[category][expense.currency]) {
+        totals[category][expense.currency] = 0;
       }
-      totals[expense.currency] += expense.sum;
+      totals[category][expense.currency] += expense.sum;
     });
+    
     return totals;
   };
 
@@ -283,11 +293,23 @@ function App() {
               <h2>Add New Expense</h2>
               <form onSubmit={handleExpenseSubmit} className="expense-form">
                 <div className="form-row">
+                  <div className="type-switch-container">
+                    <label className="type-switch">
+                      <input
+                        type="checkbox"
+                        checked={newExpense.type === 'INCOME'}
+                        onChange={(e) => setNewExpense({...newExpense, type: e.target.checked ? 'INCOME' : 'EXPENSE'})}
+                        disabled={isLoading}
+                      />
+                      <span className="type-slider"></span>
+                      <span className="type-label">{newExpense.type === 'INCOME' ? 'Income' : 'Expense'}</span>
+                    </label>
+                  </div>
                   <input
                     type="text"
                     value={newExpense.description}
                     onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                    placeholder="Expense description"
+                    placeholder={newExpense.type === 'INCOME' ? 'Income description' : 'Expense description'}
                     className="expense-input"
                     disabled={isLoading}
                   />
@@ -317,14 +339,14 @@ function App() {
                     onChange={(e) => setNewExpense({...newExpense, moment: e.target.value})}
                     className="expense-input"
                     disabled={isLoading}
-                    title="Expense date and time"
+                    title="Date and time"
                   />
                   <button 
                     type="submit" 
                     className="add-button"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Adding...' : 'Add Expense'}
+                    {isLoading ? 'Adding...' : `Add ${newExpense.type === 'INCOME' ? 'Income' : 'Expense'}`}
                   </button>
                 </div>
               </form>
@@ -412,7 +434,9 @@ function App() {
                     {getSortedExpenses().map((expense) => (
                       <tr key={expense.id}>
                         <td className="expense-description">{expense.description}</td>
-                        <td className="expense-amount">{expense.sum.toFixed(2)}</td>
+                        <td className={`expense-amount ${expense.type === 'INCOME' ? 'income' : 'expense'}`}>
+                          {expense.type === 'INCOME' ? '+' : '-'}{expense.sum.toFixed(2)}
+                        </td>
                         <td className="expense-currency">{expense.currency}</td>
                         <td className="expense-date">{formatDate(expense.moment)}</td>
                         <td className="expense-actions">
@@ -432,16 +456,45 @@ function App() {
             </div>
 
             <div className="expense-summary">
-              <h3>Total for Selected Period</h3>
-              {Object.entries(getTotalExpenses()).length === 0 ? (
-                <div className="total-item">No expenses in selected period</div>
-              ) : (
-                Object.entries(getTotalExpenses()).map(([currency, total]) => (
-                  <div key={currency} className="total-item">
-                    {currency}: {total.toFixed(2)}
+              {(() => {
+                const totals = getTotalExpenses();
+                const hasExpenses = Object.keys(totals.expenses).length > 0;
+                const hasIncomes = Object.keys(totals.incomes).length > 0;
+                
+                if (!hasExpenses && !hasIncomes) {
+                  return <div className="total-item">Total for Selected Period: No transactions</div>;
+                }
+                
+                return (
+                  <div className="total-single-line">
+                    <span className="total-caption">Total for Selected Period:</span>
+                    {hasExpenses && (
+                      <span className="total-section">
+                        <span className="total-label">Expenses:</span>
+                        <span className="total-amounts expense">
+                          {Object.entries(totals.expenses).map(([currency, total]) => (
+                            <span key={currency} className="currency-total">
+                              -{currency} {total.toFixed(2)}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                    )}
+                    {hasIncomes && (
+                      <span className="total-section">
+                        <span className="total-label">Incomes:</span>
+                        <span className="total-amounts income">
+                          {Object.entries(totals.incomes).map(([currency, total]) => (
+                            <span key={currency} className="currency-total">
+                              +{currency} {total.toFixed(2)}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                    )}
                   </div>
-                ))
-              )}
+                );
+              })()}
             </div>
           </div>
 
