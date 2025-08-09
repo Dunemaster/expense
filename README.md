@@ -96,3 +96,16 @@ spring-react-app/
 - **Backend**: Spring Boot 3.2.0, Java 17, Maven
 - **Frontend**: React 18, JavaScript, CSS
 - **Communication**: REST API with JSON
+
+
+## Next steps
+
+ - reformat main page - show only todays expenses, add date range filter
+ - add ability to select expense, edit it, save and delete
+ - add storage place
+ -- backend
+ - show current balance
+ -- calculate on backend
+ -- show on frontend
+
+ - decide how to deploy into cloud (function? which database to use?)

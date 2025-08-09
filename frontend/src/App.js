@@ -1,34 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+  const [newExpense, setNewExpense] = useState({
+    description: '',
+    sum: '',
+    currency: 'EUR'
+  });
 
-  const handleSubmit = async (e) => {
+  // Load expenses when component mounts
+  useEffect(() => {
+    loadExpenses();
+  }, []);
+
+  const loadExpenses = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/expenses');
+      if (response.ok) {
+        const data = await response.json();
+        setExpenses(data);
+      }
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+    }
+  };
+
+  const handleExpenseSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) {
-      alert('Please enter your name');
+    if (!newExpense.description.trim() || !newExpense.sum) {
+      alert('Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/name', {
+      const response = await fetch('http://localhost:8080/api/expenses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({
+          description: newExpense.description.trim(),
+          sum: parseFloat(newExpense.sum),
+          currency: newExpense.currency
+        }),
       });
 
       if (response.ok) {
-        const result = await response.text();
-        setMessage(result);
-        setName('');
+        const createdExpense = await response.json();
+        setExpenses([createdExpense, ...expenses]);
+        setNewExpense({ description: '', sum: '', currency: 'EUR' });
+        setMessage('Expense added successfully!');
       } else {
-        setMessage('Error: Failed to submit name');
+        setMessage('Error: Failed to add expense');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -38,35 +65,139 @@ function App() {
     }
   };
 
+  const deleteExpense = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/expenses/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setExpenses(expenses.filter(expense => expense.id !== id));
+        setMessage('Expense deleted successfully!');
+      } else {
+        setMessage('Error: Failed to delete expense');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('Error: Could not connect to server');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const getTotalExpenses = () => {
+    const totals = {};
+    expenses.forEach(expense => {
+      if (!totals[expense.currency]) {
+        totals[expense.currency] = 0;
+      }
+      totals[expense.currency] += expense.sum;
+    });
+    return totals;
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>Expense Management System</h1>
-        <div className="name-form-container">
-          <h2>Welcome! Please enter your name:</h2>
-          <form onSubmit={handleSubmit} className="name-form">
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              className="name-input"
-              disabled={isLoading}
-            />
-            <button 
-              type="submit" 
-              className="submit-button"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Submitting...' : 'Submit Name'}
-            </button>
-          </form>
-          {message && (
-            <div className="message">
-              {message}
+        
+          <div className="expense-management">
+            <div className="expense-form-container">
+              <h2>Add New Expense</h2>
+              <form onSubmit={handleExpenseSubmit} className="expense-form">
+                <div className="form-row">
+                  <input
+                    type="text"
+                    value={newExpense.description}
+                    onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                    placeholder="Expense description"
+                    className="expense-input"
+                    disabled={isLoading}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newExpense.sum}
+                    onChange={(e) => setNewExpense({...newExpense, sum: e.target.value})}
+                    placeholder="Amount"
+                    className="expense-input"
+                    disabled={isLoading}
+                  />
+                  <select
+                    value={newExpense.currency}
+                    onChange={(e) => setNewExpense({...newExpense, currency: e.target.value})}
+                    className="expense-select"
+                    disabled={isLoading}
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                  </select>
+                  <button 
+                    type="submit" 
+                    className="add-button"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Adding...' : 'Add Expense'}
+                  </button>
+                </div>
+              </form>
             </div>
-          )}
-        </div>
+
+            <div className="expense-summary">
+              <h3>Total Expenses</h3>
+              {Object.entries(getTotalExpenses()).map(([currency, total]) => (
+                <div key={currency} className="total-item">
+                  {currency}: {total.toFixed(2)}
+                </div>
+              ))}
+            </div>
+
+            <div className="expense-list">
+              <h3>Recent Expenses ({expenses.length})</h3>
+              {expenses.length === 0 ? (
+                <p className="no-expenses">No expenses recorded yet.</p>
+              ) : (
+                <div className="expenses-grid">
+                  {expenses.map((expense) => (
+                    <div key={expense.id} className="expense-item">
+                      <div className="expense-header">
+                        <h4>{expense.description}</h4>
+                        <button 
+                          onClick={() => deleteExpense(expense.id)}
+                          className="delete-button"
+                          title="Delete expense"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="expense-details">
+                        <span className="expense-amount">
+                          {expense.currency} {expense.sum.toFixed(2)}
+                        </span>
+                        <span className="expense-date">
+                          {formatDate(expense.moment)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+        {message && (
+          <div className="message">
+            {message}
+          </div>
+        )}
       </header>
     </div>
   );
