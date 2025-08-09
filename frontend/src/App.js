@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import './components/Menu.css';
+import Categories from './components/Categories';
 
 // Get API base URL from environment variable with fallback
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
@@ -14,7 +15,8 @@ function App() {
     sum: '',
     currency: 'EUR',
     moment: new Date().toISOString().slice(0, 16), // Default to current date-time in local timezone
-    type: 'EXPENSE' // Default to expense
+    type: 'EXPENSE', // Default to expense
+    categoryId: '' // Category selection
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'moment',
@@ -26,11 +28,30 @@ function App() {
   });
   const [quickFilter, setQuickFilter] = useState('today');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState('main');
+  const [categories, setCategories] = useState([]);
 
   // Load expenses when component mounts or date filter changes
   useEffect(() => {
     loadExpenses();
   }, [dateFilter]);
+
+  // Load categories when transaction type changes
+  useEffect(() => {
+    loadCategories();
+  }, [newExpense.type]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories/type/${newExpense.type}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const loadExpenses = async () => {
     try {
@@ -54,8 +75,8 @@ function App() {
 
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
-    if (!newExpense.description.trim() || !newExpense.sum) {
-      alert('Please fill in all fields');
+    if (!newExpense.sum || !newExpense.categoryId) {
+      alert('Please fill in amount and select a category');
       return;
     }
 
@@ -71,7 +92,8 @@ function App() {
           sum: parseFloat(newExpense.sum),
           currency: newExpense.currency,
           moment: new Date(newExpense.moment).toISOString(),
-          type: newExpense.type
+          type: newExpense.type,
+          category: { id: parseInt(newExpense.categoryId) }
         }),
       });
 
@@ -84,7 +106,8 @@ function App() {
           sum: '', 
           currency: 'EUR',
           moment: new Date().toISOString().slice(0, 16),
-          type: 'EXPENSE'
+          type: 'EXPENSE',
+          categoryId: ''
         });
         setMessage('Expense added successfully!');
       } else {
@@ -300,9 +323,28 @@ function App() {
 
       {/* Side Menu */}
       <nav className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
-        <div className="menu-item active" title="Main">
+        <div 
+          className={`menu-item ${currentPage === 'main' ? 'active' : ''}`} 
+          title="Main"
+          onClick={() => {
+            setCurrentPage('main');
+            setIsMenuOpen(false);
+          }}
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <div 
+          className={`menu-item ${currentPage === 'categories' ? 'active' : ''}`} 
+          title="Categories"
+          onClick={() => {
+            setCurrentPage('categories');
+            setIsMenuOpen(false);
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
           </svg>
         </div>
       </nav>
@@ -315,10 +357,13 @@ function App() {
         ></div>
       )}
 
-      <header className="App-header">
-        <h1>Expense Management System</h1>
-        
-          <div className="expense-management">
+      {currentPage === 'categories' ? (
+        <Categories />
+      ) : (
+        <header className="App-header">
+          <h1>Expense Management System</h1>
+          
+            <div className="expense-management">
             <div className="expense-form-container">
               <h2>Add New Expense</h2>
               <form onSubmit={handleExpenseSubmit} className="expense-form">
@@ -335,14 +380,7 @@ function App() {
                       <span className="type-label">{newExpense.type === 'INCOME' ? 'Income' : 'Expense'}</span>
                     </label>
                   </div>
-                  <input
-                    type="text"
-                    value={newExpense.description}
-                    onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                    placeholder={newExpense.type === 'INCOME' ? 'Income description' : 'Expense description'}
-                    className="expense-input"
-                    disabled={isLoading}
-                  />
+
                   <input
                     type="number"
                     step="0.01"
@@ -352,6 +390,20 @@ function App() {
                     className="expense-input"
                     disabled={isLoading}
                   />
+                  <select
+                    value={newExpense.categoryId}
+                    onChange={(e) => setNewExpense({...newExpense, categoryId: e.target.value})}
+                    className="expense-select"
+                    disabled={isLoading}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.parent ? `${category.parent.name} > ${category.name}` : category.name}
+                      </option>
+                    ))}
+                  </select>
                   <select
                     value={newExpense.currency}
                     onChange={(e) => setNewExpense({...newExpense, currency: e.target.value})}
@@ -370,6 +422,14 @@ function App() {
                     className="expense-input"
                     disabled={isLoading}
                     title="Date and time"
+                  />
+                  <input
+                    type="text"
+                    value={newExpense.description}
+                    onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                    placeholder={newExpense.type === 'INCOME' ? 'Income description' : 'Expense description'}
+                    className="expense-input"
+                    disabled={isLoading}
                   />
                   <button 
                     type="submit" 
@@ -429,6 +489,7 @@ function App() {
                 <table className="expenses-table">
                   <thead>
                     <tr>
+                      <th>Category</th>
                       <th 
                         onClick={() => handleSort('description')}
                         className="sortable-header"
@@ -463,7 +524,16 @@ function App() {
                   <tbody>
                     {getSortedExpenses().map((expense) => (
                       <tr key={expense.id}>
-                        <td className="expense-description">{expense.description}</td>
+                        <td className="expense-category">
+                          {expense.category ? 
+                            (expense.category.parent ? 
+                              `${expense.category.parent.name} > ${expense.category.name}` : 
+                              expense.category.name
+                            ) : 
+                            'No Category'
+                          }
+                        </td>
+                        <td className="expense-description">{expense.description || '-'}</td>
                         <td className={`expense-amount ${expense.type === 'INCOME' ? 'income' : 'expense'}`}>
                           {expense.type === 'INCOME' ? '+' : '-'}{expense.sum.toFixed(2)}
                         </td>
@@ -528,12 +598,13 @@ function App() {
             </div>
           </div>
 
-        {message && (
-          <div className="message">
-            {message}
-          </div>
-        )}
-      </header>
+          {message && (
+            <div className="message">
+              {message}
+            </div>
+          )}
+        </header>
+      )}
     </div>
   );
 }

@@ -14,7 +14,7 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String description;
     
     @Column(nullable = false, precision = 19, scale = 2)
@@ -30,6 +30,10 @@ public class Expense {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
+    
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
     
     // Default constructor
     public Expense() {
@@ -84,6 +88,14 @@ public class Expense {
     
     public void setType(TransactionType type) {
         this.type = type;
+    }
+    
+    public Category getCategory() {
+        return category;
+    }
+    
+    public void setCategory(Category category) {
+        this.category = category;
     }
     
     @Override

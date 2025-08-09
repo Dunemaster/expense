@@ -337,6 +337,14 @@ h3 {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.expense-category {
+  font-weight: 500;
+  max-width: 150px;
+  word-wrap: break-word;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .expense-description {
   font-weight: 500;
   max-width: 200px;
